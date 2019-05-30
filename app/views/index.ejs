@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Information Terminal</title>
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css"
+    integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+</head>
+
+<body>
+
+  <!-- Timetable Study Programme Change Indicators -->
+  <div id="timeTableChange">
+    <div id="outer-circle" style="background-color: #1fb3c9">
+      <div id="inner-circle" class="timetableIndicator"
+        style="font-weight: bold; font-size: 16px; color: #2A2F42c9; background-color: #1fb3c9;"><span
+          id="timerMin">0</span>:<span id="mitTimer"></span>
+      </div>
+    </div>
+
+    <div id="outer-circle" style="margin-left: 25px; background-color: #1fc98b;">
+      <div id="inner-circle" class="timetableIndicator"
+        style="font-weight: bold; font-size: 16px; color: #1fc98b; background-color: #2A2F42;"><span
+          id="timerMin2">0</span>:<span id="ifTimer"></span>
+      </div>
+    </div>
+
+    <div id="outer-circle" style="margin-left: 25px; background-color: #c98b1f;">
+      <div id="inner-circle" class="timetableIndicator"
+        style="font-weight: bold; font-size: 16px; color: #c98b1f; background-color: #2A2F42;"><span
+          id="timerMin3">1</span>:<span id="matTimer"></span>
+      </div>
+    </div>
+
+    <div class="programmeTitleIndicator" style="font-weight: bold; font-size: 16px; color: #1fb3c9;">MIT</div>
+    <div class="programmeTitleIndicator"
+      style="font-weight: bold; font-size: 16px; margin-left: 105px; color: #1fc98b;">IF</div>
+    <div class="programmeTitleIndicator"
+      style="font-weight: bold; font-size: 16px; margin-left: 210px; color: #c98b1f;">MAT</div>
+
+    <!-- Current Day Information and Log In -->
+    <a class="btn" style="float: right; margin-left: 25px;" href="/login">Log In</a>
+    <div class="btn" id="txt" style="float: right"></div>
+
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+
+    <!-- Time Content Div with Study programme Titles -->
+    <div id="time" style="float: left; text-align: left;">
+
+      <div id="mitTitle" class="light-blue timetableTitle"
+        style="color: #2A2F42; display: table; text-align: center; height: 50px; position: absolute; background-color: #25d5ef; width: 150px; ">
+        <div style="display: table-cell; vertical-align: middle;">
+          <h3 class="moduleInfo">MIT</h3>
+        </div>
+      </div>
+
+      <div id="ifTitle" class="light-green timetableTitle"
+        style="visibility: hidden; color: #2A2F42; display: table; text-align: center; height: 50px; position: absolute; width: 150px; ">
+        <div style="display: table-cell; vertical-align: middle;">
+          <h3 class="moduleInfo">IF</h3>
+        </div>
+      </div>
+
+      <div id="matTitle" class="light-orange timetableTitle"
+        style="visibility: hidden; color: #2A2F42; display: table; text-align: center; height: 50px; position: absolute; width: 150px; ">
+        <div style="display: table-cell; vertical-align: middle;">
+          <h3 class="moduleInfo">MAT</h3>
+        </div>
+      </div>
+
+      <!-- Displayed Time Range -->
+      <% for(n=0; n<clock.length; n++){ %>
+      <div
+        style="position: absolute; margin-top: <%= ((((((new Date(clock[n].start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px' %>; height: 50px; width: 150px; margin-right: 25px; background-color: #2A2F42;">
+        <h3><%= clock[n].time %></h3>
+      </div>
+      <% } %>
+    </div>
+
+
+    <!-- MIT Study Programme Div -->
+    <div id="mit" class="timetable" style="color: #2A2F42;">
+      <%
+      let groups = times.reduce((acc, current) => {
+        let found = acc.find(x => x.studyProgramme === current.studyProgramme)
+
+        if (found) {
+          found.subgroups.push(current)
+          return acc
+        }
+        return  [ ...acc, { studyProgramme: current.studyProgramme, subgroups: [ current ] } ]
+      }, [])
+
+      groups.forEach(group => {
+        const subgroups = group.subgroups.reduce((acc, current) => {
+          let found = acc.find(x => x.subgroup === current.subgroup)
+          if (found) {
+            found.items.push(current)
+            return acc
+          }
+          return  [ ...acc, { subgroup: current.subgroup, items: [ current ] } ]
+        }, [])
+
+        if(group.studyProgramme === "MIT") {
+        var currentStyle = "blue"
+        var marginIncrement = 150
+        var marginLeft = marginIncrement
+        subgroups.forEach(sg => {
+      %>
+      <div id="<%= sg.subgroup %>" style="float: left; margin-left: <%= marginLeft %>px; text-align: center;">
+        <% 
+        sg.items.forEach(subgroup => {
+          if (subgroup.weekday === todayStr) {
+        %>
+        <div style="display: table; height: 50px; z-index: 1; position: fixed; width: 150px; ">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.subgroup %></h3>
+          </div>
+        </div>
+
+        <% if(subgroup.type === "Lecture"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Lab Work"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Exam"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <%
+          } 
+          }})
+        %>
+      </div>
+      <%
+        marginLeft = marginLeft + marginIncrement
+        currentStyle = currentStyle === "blue" ? "light-blue" : "blue"
+        %>
+      <%
+        })
+        }
+      })
+      %>
+    </div>
+
+    <!-- IF Study Programme Div -->
+    <div id="if" class="timetable" style="color: #2A2F42; visibility: hidden;">
+      <%
+      groups.forEach(group => {
+        const subgroups = group.subgroups.reduce((acc, current) => {
+          let found = acc.find(x => x.subgroup === current.subgroup)
+          if (found) {
+            found.items.push(current)
+            return acc
+          }
+          return  [ ...acc, { subgroup: current.subgroup, items: [ current ] } ]
+        }, [])
+
+        if(group.studyProgramme === "IF") {
+        var currentStyle = "green"
+        var marginIncrement = 150
+        var marginLeft = marginIncrement
+        subgroups.forEach(sg => {
+      %>
+      <div id="<%= sg.subgroup %>" style="float: left; margin-left: <%= marginLeft %>px; text-align: center;">
+        <% 
+        sg.items.forEach(subgroup => {
+          if (subgroup.weekday === todayStr) {
+        %>
+        <div style="display: table; height: 50px; z-index: 1; position: fixed; width: 150px; ">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.subgroup %></h3>
+          </div>
+        </div>
+
+        <% if(subgroup.type === "Lecture"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Lab Work"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Exam"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <%
+          } 
+          }})
+        %>
+      </div>
+      <%
+        marginLeft = marginLeft + marginIncrement
+        currentStyle = currentStyle === "green" ? "light-green" : "green"
+        %>
+      <%
+        })
+        }
+      })
+      %>
+    </div>
+
+    <!-- MAT Study Programme Div -->
+    <div id="mat" class="timetable" style="color: #2A2F42; visibility: hidden;">
+      <%
+      groups.forEach(group => {
+        const subgroups = group.subgroups.reduce((acc, current) => {
+          let found = acc.find(x => x.subgroup === current.subgroup)
+          if (found) {
+            found.items.push(current)
+            return acc
+          }
+          return  [ ...acc, { subgroup: current.subgroup, items: [ current ] } ]
+        }, [])
+
+        if(group.studyProgramme === "MAT") {
+        var currentStyle = "orange"
+        var marginIncrement = 150
+        var marginLeft = marginIncrement
+        subgroups.forEach(sg => {
+      %>
+      <div id="<%= sg.subgroup %>" style="float: left; margin-left: <%= marginLeft %>px; text-align: center;">
+        <% 
+        sg.items.forEach(subgroup => {
+          if (subgroup.weekday === todayStr) {
+        %>
+        <div style="display: table; height: 50px; z-index: 1; position: fixed; width: 150px; ">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.subgroup %></h3>
+          </div>
+        </div>
+
+        <% if(subgroup.type === "Lecture"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Lab Work"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <% } %>
+
+        <% if(subgroup.type === "Exam"){ %>
+        <div
+          style="display: table; position: absolute; margin-top: <%= ((((((new Date(subgroup.start) - new Date('2019-05-21T08:00:00'))/1000)/60)/15)*50) + 100).toString() + 'px'%>; height: <%= (((((new Date(subgroup.end) - new Date(subgroup.start))/1000)/60)/15)*50).toString() + 'px' %>; width: 150px; margin-right: 25px; background-color: #208EC9;">
+          <div class="<%= currentStyle %>" style="display: table-cell; vertical-align: middle;">
+            <h3 class="moduleInfo"><%= subgroup.title %></h3>
+            <h3 class="moduleInfo"><%= subgroup.type %></h3>
+            <h3 class="moduleInfo"><%= subgroup.start %></h3>
+            <h3 class="moduleInfo"><%= subgroup.end %></h3>
+            <h3 class="moduleInfo"><%= subgroup.classroom %></h3>
+          </div>
+        </div>
+        <%
+          } 
+          }})
+        %>
+      </div>
+      <%
+        marginLeft = marginLeft + marginIncrement
+        currentStyle = currentStyle === "orange" ? "light-orange" : "orange"
+        %>
+      <%
+        })
+        }
+      })
+      %>
+    </div>
+
+    <!--  Multimedia Elements on the Right Side -->
+    <div id="sideBlocks" style="float: right; height: 825px; width: 350px;">
+      <div id="weatherBlock" style="position :fixed; background-color: #208EC9; height: 250px; width: 350px; ">
+        <div id="weatherInfo" style="float: left;">
+          <h3 class="weatherInfoDegrees" style="margin-right: 25px; float: right"><%= weather.temp %>°C</h3>
+          <h3 class="weatherInfoEl" style="margin-left: 25px; margin-top: 125px;"><%= weather.city %>,</h3>
+          <h3 class="weatherInfoEl" style="margin-left: 25px;"><%= weather.desc %></h3>
+        </div>
+      </div>
+      <div id="videoGallery"
+        style="margin-top: 275px; position :fixed; background-color: black; height: 250px; width: 350px; ">
+        <% for(i=0; i<videos.length; i++) { %>
+        <% if(i == 0) { %>
+        <video muted loop autoplay width="350" height="250" class="allVideo" src="/uploads/<%= videos[i].name %>" alt=""
+          id="video_<%= i %>"></video>
+        <% }; %>
+        <% if(i != 0) { %>
+        <video muted loop autoplay width="350" height="250" class="allVideo" src="/uploads/<%= videos[i].name %>" alt=""
+          id="video_<%= i %>" style="display:none;"></video>
+        <% }; %>
+        <% }; %>
+
+      </div>
+      <div id="imgGallery"
+        style="margin-top: 550px; position :fixed; background-color: #2A2F42; height: 250px; width: 350px; ">
+        <% for(i=0; i<images.length; i++) { %>
+        <% if(i == 0) { %>
+        <img
+          style="max-width:350px; max-height:250px; width:auto; height:auto; margin: auto; top: 0; right: 0; bottom: 0; left: 0; position: absolute;"
+          class="allImage" src="/uploads/<%= images[i].name %>" alt="" id="image_<%= i %>">
+        <% }; %>
+        <% if(i != 0) { %>
+        <img
+          style="display: none; max-width:350px; max-height:250px; width:auto; height:auto; margin: auto; top: 0; right: 0; bottom: 0; left: 0; position: absolute;"
+          class="allImage" src="/uploads/<%= images[i].name %>" alt="" id="image_<%= i %>">
+        <% }; %>
+        <% }; %>
+      </div>
+    </div>
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+      integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+    <script type="text/javascript">
+      // Auto Scroll //
+      function scroll(speed) {
+        $('html, body').animate({ scrollTop: $(document).height() - $(window).height() }, speed, function () {
+          $(this).animate({ scrollTop: 0 }, speed);
+        });
+      }
+
+      speed = 30000;
+
+      scroll(speed)
+      setInterval(function () { scroll(speed) }, speed * 2);
+
+      // Switch Between Displaying Timetables, Study Programme Titles and Countdown Timer Styles //
+      var timetableDisplay = document.getElementsByClassName("timetable");
+      var programIndicator = document.getElementsByClassName("timetableTitle");
+      var circleIndicator = document.getElementsByClassName("timetableIndicator");
+      var colors = ["#1fb3c9", "#1fc98b", "#c98b1f"];
+      curTag = 0;
+
+      setInterval(function () {
+        timetableDisplay[curTag].style.visibility = 'hidden';
+        programIndicator[curTag].style.visibility = 'hidden';
+        circleIndicator[curTag].style.backgroundColor = "#2A2F42";
+        circleIndicator[curTag].style.color = colors[curTag];
+        curTag++;
+        if (curTag == 3) { curTag = 0; }
+        timetableDisplay[curTag].style.visibility = 'visible';
+        programIndicator[curTag].style.visibility = 'visible';
+        circleIndicator[curTag].style.backgroundColor = "";
+        circleIndicator[curTag].style.color = "#2A2F42";
+      }, 60000);
+
+
+      //Show Date
+      function startTime() {
+        var dayarray = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
+        var montharray = new Array("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+        var daysarraynum = ["1", "2", "3", "4", "5,", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "19", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"];
+        var today = new Date();
+        var h = today.getHours();
+        var m = today.getMinutes();
+        var d = today.getDay();
+        var mn = today.getMonth();
+        var cd = today.getDate();
+        m = checkTime(m);
+        document.getElementById('txt').innerHTML =
+          h + ":" + m + " | " + dayarray[d] + ", " + montharray[mn] + ", " + daysarraynum[cd - 1];
+        var t = setTimeout(startTime, 500);
+      }
+      function checkTime(i) {
+        if (i < 10) { i = "0" + i };
+        return i;
+      }
+
+      startTime();
+
+      //TimeTable Display Change Timer
+      var count = 60;
+      var start = 0;
+
+      var arrMit = [0, 1, 0];
+      var arrIf = [0, 0, 1];
+      var arrMat = [1, 0, 0];
+
+      window.setInterval(function () {
+        if (count <= 0) {
+          count = 60;
+          start++;
+          if (start >= 3) {
+            start = 0;
+          }
+          document.getElementById("timerMin").innerHTML = arrMit[start];
+        } else {
+          count = count - 1;
+          document.getElementById("mitTimer").innerHTML = count;
+        }
+      }, 1000);
+
+      var count2 = 60;
+      var start2 = 0;
+
+      window.setInterval(function () {
+        if (count2 <= 0) {
+          count2 = 60;
+          start2++;
+          if (start2 >= 3) {
+            start2 = 0;
+          }
+          document.getElementById("timerMin2").innerHTML = arrIf[start2];
+        } else {
+          count2 = count2 - 1;
+          document.getElementById("ifTimer").innerHTML = count2;
+        }
+      }, 1000);
+
+      var count3 = 60;
+      var start3 = 0;
+
+      window.setInterval(function () {
+        if (count3 <= 0) {
+          count3 = 60;
+          start3++;
+          if (start3 >= 3) {
+            start3 = 0;
+          }
+          document.getElementById("timerMin3").innerHTML = arrMat[start3];
+        } else {
+          count3 = count3 - 1;
+          document.getElementById("matTimer").innerHTML = count3;
+        }
+      }, 1000);
+
+      // Display Video Automatically //
+      var a = 0;
+
+      setInterval(function () {
+        myFunction();
+      }, 15000);
+
+      function myFunction() {
+        a = a + 1;
+        var length = $('.allVideo').length;
+        if (a == length) {
+          a = 0;
+        }
+        $('.allVideo').hide();
+        $('#video_' + a).show();
+      }
+
+      // Display Image automatically //
+      var b = 0;
+
+      setInterval(function () {
+        myFunction2();
+      }, 5000);
+
+      function myFunction2() {
+        b = b + 1;
+        var length = $('.allImage').length;
+        if (b == length) {
+          b = 0;
+        }
+        $('.allImage').hide();
+        $('#image_' + b).show();
+      }
+    </script>
+
+</body>
+
+</html>
